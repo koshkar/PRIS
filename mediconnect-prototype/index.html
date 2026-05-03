@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MediConnect — обмен медицинскими данными</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">+</span>
+      <span class="brand-name">MediConnect</span>
+    </div>
+    <nav id="nav" class="nav hidden">
+      <span id="who" class="who"></span>
+      <button id="logoutBtn" class="btn btn-ghost">Выйти</button>
+    </nav>
+  </header>
+
+  <main id="app"></main>
+
+  <template id="tpl-login">
+    <section class="card auth">
+      <h1>Вход в MediConnect</h1>
+      <p class="muted">Платформа обмена медицинскими данными между пациентами, врачами и клиниками.</p>
+
+      <div class="role-row">
+        <button class="role" data-role="patient">Пациент</button>
+        <button class="role" data-role="doctor">Врач</button>
+        <button class="role" data-role="admin">Администратор</button>
+      </div>
+
+      <form id="loginForm" class="form">
+        <label>Логин
+          <input id="login" type="text" autocomplete="username" required />
+        </label>
+        <label>Пароль
+          <input id="password" type="password" autocomplete="current-password" required />
+        </label>
+        <button type="submit" class="btn btn-primary">Войти</button>
+        <p id="loginError" class="error" role="alert"></p>
+      </form>
+
+      <details class="hint">
+        <summary>Демо-аккаунты</summary>
+        <ul>
+          <li>Пациент: <code>ivanov</code> / <code>1234</code></li>
+          <li>Пациент: <code>petrova</code> / <code>1234</code></li>
+          <li>Врач: <code>smirnov</code> / <code>1234</code></li>
+          <li>Врач: <code>kuznetsova</code> / <code>1234</code></li>
+          <li>Администратор: <code>admin</code> / <code>1234</code></li>
+        </ul>
+      </details>
+    </section>
+  </template>
+
+  <template id="tpl-patient">
+    <section class="grid">
+      <article class="card">
+        <h2>Моя медкарта</h2>
+        <p class="muted small">Личные данные, аллергии, хронические заболевания.</p>
+        <div id="patientProfile"></div>
+      </article>
+
+      <article class="card">
+        <h2>Анализы и записи</h2>
+        <p class="muted small">Результаты анализов и приёмов из локального кэша / API.</p>
+        <div id="recordsList"></div>
+      </article>
+
+      <article class="card span-2">
+        <h2>Согласия на доступ</h2>
+        <p class="muted small">Управляйте, кто из врачей имеет доступ к вашим данным. Без согласия передача запрещена.</p>
+        <div id="consents"></div>
+      </article>
+
+      <article class="card span-2">
+        <h2>Передать данные врачу</h2>
+        <p class="muted small">Сценарий из диаграммы последовательности: проверка согласия → передача → уведомление.</p>
+        <form id="shareForm" class="row-form">
+          <label>Врач
+            <select id="shareDoctor"></select>
+          </label>
+          <label>Что передать
+            <select id="shareRecord"></select>
+          </label>
+          <button type="submit" class="btn btn-primary">Отправить</button>
+        </form>
+        <div id="shareStatus" class="status"></div>
+      </article>
+    </section>
+  </template>
+
+  <template id="tpl-doctor">
+    <section class="grid">
+      <article class="card span-2">
+        <h2>Мои пациенты</h2>
+        <p class="muted small">Список пациентов, которые предоставили вам согласие на доступ.</p>
+        <div id="doctorPatients"></div>
+      </article>
+
+      <article class="card span-2">
+        <h2>Уведомления</h2>
+        <p class="muted small">Новые данные, переданные пациентами.</p>
+        <div id="doctorNotifications"></div>
+      </article>
+
+      <article class="card span-2">
+        <h2>Добавить запись о приёме</h2>
+        <form id="recordForm" class="row-form">
+          <label>Пациент
+            <select id="recPatient"></select>
+          </label>
+          <label>Тип
+            <select id="recType">
+              <option value="visit">Приём</option>
+              <option value="lab">Анализ</option>
+              <option value="prescription">Назначение</option>
+            </select>
+          </label>
+          <label class="grow">Описание
+            <input id="recText" type="text" placeholder="Жалобы, диагноз, рекомендации…" required />
+          </label>
+          <button type="submit" class="btn btn-primary">Сохранить</button>
+        </form>
+        <div id="recordStatus" class="status"></div>
+      </article>
+    </section>
+  </template>
+
+  <template id="tpl-admin">
+    <section class="grid">
+      <article class="card span-2">
+        <h2>Журнал аудита</h2>
+        <p class="muted small">Все события безопасности и доступа к данным.</p>
+        <div class="filters">
+          <input id="auditFilter" type="search" placeholder="Фильтр: пользователь, действие, тип…" />
+          <button id="auditClear" class="btn btn-ghost">Очистить журнал</button>
+        </div>
+        <div id="auditLog"></div>
+      </article>
+
+      <article class="card">
+        <h2>Пользователи</h2>
+        <div id="usersList"></div>
+      </article>
+
+      <article class="card">
+        <h2>Состояние системы</h2>
+        <ul id="health"></ul>
+      </article>
+    </section>
+  </template>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
